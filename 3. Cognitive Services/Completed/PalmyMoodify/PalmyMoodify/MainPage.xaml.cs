@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Xamarin.Forms;
+using Microsoft.ProjectOxford.Emotion;
 
 namespace PalmyMoodify
 {
@@ -35,14 +36,31 @@ namespace PalmyMoodify
             if (file == null)
                 return;
 
-            await DisplayAlert("File Location", file.Path, "OK");
-
-            image.Source = ImageSource.FromStream(() =>
+            try
             {
-                var stream = file.GetStream();
-                file.Dispose();
-                return stream;
-            });
+                string emotionKey = "YOUR-API-KEY";
+
+                EmotionServiceClient emotionClient = new EmotionServiceClient(emotionKey);
+
+                var emotionResults = await emotionClient.RecognizeAsync(file.GetStream());
+
+                UploadingIndicator.IsRunning = false;
+
+                var temp = emotionResults[0].Scores;
+
+                EmotionView.ItemsSource = temp.ToRankedList();
+
+                image.Source = ImageSource.FromStream(() =>
+                {
+                    var stream = file.GetStream();
+                    file.Dispose();
+                    return stream;
+                });
+            }
+            catch (Exception ex)
+            {
+                errorLabel.Text = ex.Message;
+            }
 
         }
     }
