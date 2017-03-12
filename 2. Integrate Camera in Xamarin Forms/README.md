@@ -59,47 +59,43 @@ For iOS, open info.plst and add the following lines to that file.
 
 ```
 <StackLayout BackgroundColor="White">
-      <Button Text="Take Picture" TextColor="White" BackgroundColor="Green" Clicked="TakePicture_Clicked" />
-      <Image x:Name="image" VerticalOptions="Start" />
-    </StackLayout>
+	<Button Text="Take Picture" TextColor="White" BackgroundColor="Green" Clicked="TakePicture_Clicked" />
+	<Image x:Name="image" VerticalOptions="Start" />
+</StackLayout>
 ```
 
-* Navigate to your portable project and inside MainPage.xaml.cs, after creating our button that's going to trigger the camera, you're going to first check if we have permissions to use the camera before takeing a photo. Add the following lines of code.
+* Navigate to your portable project and inside MainPage.xaml.cs, after creating our button to trigger the camera, we need to now add the 'TakePicture_Clicked' event method that's called when out button is tapped. Add the following method under the constructor method.
 
 ```
-var cameraStatus = await CrossPermissions.Current.CheckPermissionStatusAsync(Permission.Camera);
-var storageStatus = await CrossPermissions.Current.CheckPermissionStatusAsync(Permission.Storage);
-
-if (cameraStatus != PermissionStatus.Granted || storageStatus != PermissionStatus.Granted)
+private async void TakePicture_Clicked(object sender, System.EventArgs e) 
 {
-    var results = await CrossPermissions.Current.RequestPermissionsAsync(new[] {Permission.Camera, Permission.Storage});
-    cameraStatus = results[Permission.Camera];
-    storageStatus = results[Permission.Storage];
+
+}
+```
+
+* Now that we have our 'TakePicture_Clicked' event handler, we now need to add code that's going to run whenever the user clicks on our button. First thing we need to do before trying to take a photo is to check and see if 1. the user's device has a camera and it's available to take photos and 2. the device supports taking photos. To do this, add the following lines of code in our 'TakePicture_Clicked' event handler.
+
+```
+if (!CrossMedia.Current.IsCameraAvailable || !CrossMedia.Current.IsTakePhotoSupported)
+{
+	await DisplayAlert("No Camera", ":( No camera avaialble.", "OK");
+	return;
 }
 ```
 
 * To take a photo add the following lines of code
 
 ```
-if (cameraStatus == PermissionStatus.Granted && storageStatus == PermissionStatus.Granted)
-{
-	var file = await CrossMedia.Current.TakePhotoAsync(new Plugin.Media.Abstractions.StoreCameraMediaOptions
-	{
-		DefaultCamera = Plugin.Media.Abstractions.CameraDevice.Front,
-		Directory = "Moodify",
-		Name = $"{DateTime.UtcNow}.jpg",
-		CompressionQuality = 92
-	});
+ var file = await CrossMedia.Current.TakePhotoAsync(new Plugin.Media.Abstractions.StoreCameraMediaOptions
+ {
+	DefaultCamera = Plugin.Media.Abstractions.CameraDevice.Front,
+	Directory = "Moodify",
+	Name = $"{DateTime.UtcNow}.jpg",
+	CompressionQuality = 92
+});
 
-	if (file == null)
-		return;
-}
-else
-{
-	await DisplayAlert("Permissions Denied", "Unable to take photos.", "OK");
-	//On iOS you may want to send your user to the settings screen.
-	//CrossPermissions.Current.OpenAppSettings();
-}
+if (file == null)
+	return;
 ```
 
 * To diplay the image add the following lines of code.
